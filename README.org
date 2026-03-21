@@ -1,0 +1,144 @@
+#+title: CCZR
+#+options: toc:2
+
+A fast log colorizer written in Rust, spiritually based on [[https://github.com/cornet/ccze][CCZE]].
+
+This is AI slop but I find it very useful. It is much faster than CCZE.
+
+Running on a Vivado log file (32 kB) I get runtimes of 2220 ms seconds for CCZE,
+25 ms for CCZR. Almost 1000x speedup. For large log files ccze has noticeable slowdown.
+
+Reads lines from stdin, applies ANSI color highlighting based on the log
+format detected, and writes to stdout.  Drop it into any pipeline.
+
+#+begin_example
+journalctl -f | cczr
+tail -f /var/log/syslog | cczr
+cat vivado.log | cczr
+#+end_example
+
+* Installation
+
+Install directly from GitHub (no local clone needed):
+
+#+begin_src sh
+cargo install --git https://github.com/andrewpeck/cczr
+#+end_src
+
+Or clone and install locally:
+
+#+begin_src sh
+git clone https://github.com/andrewpeck/cczr
+cargo install --path cczr
+#+end_src
+
+Or build without installing:
+
+#+begin_src sh
+cargo build --release
+# binary at ./target/release/cczr
+#+end_src
+
+* Usage
+
+#+begin_src
+USAGE:
+    cczr [OPTIONS]
+
+OPTIONS:
+    -n, --no-color        Disable ANSI color output (plain text pass-through)
+        --list-plugins    List available plugins and exit
+    -h, --help            Print help information
+#+end_src
+
+** Examples
+
+#+begin_src sh
+# Colorize a Vivado implementation log
+cat impl_1/impl.log | cczr
+
+# Colorize live systemd journal output
+journalctl -fu myservice | cczr
+
+# Pipe Apache access log
+tail -f /var/log/apache2/access.log | cczr
+
+# Strip color (useful for further processing)
+cat app.log | cczr --no-color
+
+# See which plugins are loaded
+cczr --list-plugins
+#+end_src
+
+* Plugins
+
+Plugins are tried in order.  /Full/ plugins consume the entire line; if none
+match, /Partial/ plugins are applied in sequence to colorize sub-fields.
+Lines that match no plugin fall back to word-level colorization.
+
+| Plugin   | Type    | Log format                              |
+|----------+---------+-----------------------------------------|
+| syslog   | Full    | Generic syslog(8) — RFC 3164            |
+| httpd    | Full    | Apache access log (CLF/vhost) and error |
+| postfix  | Full    | Postfix MTA                             |
+| squid    | Full    | Squid access, store, and cache logs     |
+| exim     | Full    | Exim MTA main log                       |
+| dpkg     | Full    | Debian dpkg/apt                         |
+| php      | Full    | PHP error log                           |
+| vsftpd   | Full    | vsftpd FTP server                       |
+| sulog    | Full    | su(1) audit log                         |
+| ulogd    | Partial | Netfilter / ulogd field coloring        |
+
+* Color roles
+
+Semantic color roles are mapped to ANSI styles.  A selection of the most
+visible roles:
+
+| Role       | Style       | Used for                              |
+|------------+-------------+---------------------------------------|
+| Date       | Cyan        | Timestamps                            |
+| Host       | Bold cyan   | Hostnames and IP addresses            |
+| Process    | Bold green  | Process / service names               |
+| Pid        | Green       | Process IDs                           |
+| User       | Bold yellow | Usernames                             |
+| HttpGet    | Bold green  | HTTP GET method                       |
+| HttpPost   | Bold cyan   | HTTP POST method                      |
+| HttpCodes  | Yellow      | 2xx / 3xx status codes                |
+| Error      | Bold red    | 4xx / 5xx, error-level log entries    |
+| Warning    | Bold yellow | Warnings                              |
+| GoodWord   | Bold green  | success, running, connected, …        |
+| BadWord    | Bold red    | error, failed, denied, timeout, …     |
+| Keyword    | Bold yellow | ~INFO~ and other highlighted keywords |
+| Uri        | Bold cyan   | URIs / URLs                           |
+| Mac        | Bold white  | MAC addresses                         |
+| Version    | Bold green  | Version strings (v1.2.3)              |
+
+* Word-level fallback
+
+Lines not matched by any plugin are scanned word-by-word for:
+
+- IPv4 addresses → Host color
+- Email addresses → Email color
+- URIs (~https://…~) → Uri color
+- MAC addresses → Mac color
+- File sizes (~4KB~, ~1.2MB~) → Size color
+- Version strings (~v3.14~, ~2.0.1~) → Version color
+- Timestamps (~HH:MM:SS~) → Date color
+- Hex addresses (~0x…~) → Address color
+- Numbers → Numbers color
+- Keywords: ~INFO~ → bold yellow; ~error~, ~failed~, … → bold red; ~running~, ~success~, … → bold green
+
+The syslog plugin also applies word-level colorization to its message body,
+so keywords like ~INFO~ are highlighted even inside matched syslog lines.
+
+* Development
+
+#+begin_src sh
+cargo test          # run all 46 tests
+cargo build         # debug build
+cargo build --release
+#+end_src
+
+Tests cover each plugin individually (match / no-match / color assertions)
+plus the full pipeline and the word-level fallback.  Log samples are modelled
+on the [[https://github.com/cornet/ccze][CCZE test corpus]].
