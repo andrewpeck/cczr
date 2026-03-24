@@ -61,6 +61,7 @@ pub enum Color {
     Keyword,
     PkgStatus,
     Package,
+    Info,
 }
 
 /// ANSI color codes (foreground)
@@ -178,6 +179,7 @@ pub fn style_for(color: Color) -> Style {
         Color::Keyword      => Style::new(Yellow,  true),
         Color::PkgStatus    => Style::new(Cyan,    false),
         Color::Package      => Style::new(Green,   false),
+        Color::Info         => Style::new(Cyan,    true),
     }
 }
 

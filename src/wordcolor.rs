@@ -64,7 +64,7 @@ fn word_color(word: &str) -> Color {
         return Color::GoodWord;
     }
     if word == "INFO" {
-        return Color::Keyword;
+        return Color::Info;
     }
     if SYSTEM_WORDS.iter().any(|&w| lower.contains(w)) {
         return Color::SystemWord;

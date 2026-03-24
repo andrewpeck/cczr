@@ -58,7 +58,7 @@ impl Plugin for Vivado {
             let msg   = caps.get(3).map_or("", |m| m.as_str());
 
             let (level_color, tag_color) = match level {
-                "INFO"             => (Color::Keyword,  Color::Ident),
+                "INFO"             => (Color::Info,      Color::Ident),
                 "WARNING"          => (Color::Warning,  Color::Ident),
                 "CRITICAL WARNING" => (Color::Error,    Color::Error),
                 "ERROR"            => (Color::Error,    Color::Error),
