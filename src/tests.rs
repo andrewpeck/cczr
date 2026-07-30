@@ -319,7 +319,7 @@ fn ulogd_no_match() {
 fn vivado_info() {
     let line = "INFO: [Netlist 29-17] Analyzing 638 Unisim elements for replacement";
     let out = matched(Vivado.process(line));
-    assert!(contains_colored(&out, Color::Keyword, "INFO"), "INFO level");
+    assert!(contains_colored(&out, Color::Info, "INFO"), "INFO level");
     assert!(contains_colored(&out, Color::Ident, "[Netlist 29-17]"), "tag");
     assert!(out.contains("Analyzing"), "message body");
 }
@@ -438,15 +438,15 @@ fn wordcolor_info_uppercase_only() {
     use crate::wordcolor::colorize_words;
     // Plain INFO
     let out = colorize_words("2024-01-01 INFO server started");
-    assert!(out.contains(&colorize(Color::Keyword, "INFO")), "INFO should be Keyword color");
+    assert!(out.contains(&colorize(Color::Info, "INFO")), "INFO should be Info color");
     // INFO: with trailing colon (Vivado / common tool log format)
     let out2 = colorize_words("INFO: [Netlist 29-17] Analyzing elements");
-    assert!(out2.contains(&colorize(Color::Keyword, "INFO")), "INFO: should highlight INFO");
+    assert!(out2.contains(&colorize(Color::Info, "INFO")), "INFO: should highlight INFO");
     // lowercase and mixed-case must not be highlighted
     let out3 = colorize_words("info server started");
-    assert!(!out3.contains(&colorize(Color::Keyword, "info")), "info must not be highlighted");
+    assert!(!out3.contains(&colorize(Color::Info, "info")), "info must not be highlighted");
     let out4 = colorize_words("Info server started");
-    assert!(!out4.contains(&colorize(Color::Keyword, "Info")), "Info must not be highlighted");
+    assert!(!out4.contains(&colorize(Color::Info, "Info")), "Info must not be highlighted");
 }
 
 #[test]
@@ -455,7 +455,7 @@ fn wordcolor_info_in_syslog_message() {
     let plugins = default_plugins();
     let line = "Jan 15 12:00:00 myhost myapp[123]: INFO: something started";
     let out = colorize_line(line, &plugins);
-    assert!(out.contains(&colorize(Color::Keyword, "INFO")), "INFO in syslog msg body");
+    assert!(out.contains(&colorize(Color::Info, "INFO")), "INFO in syslog msg body");
 }
 
 #[test]
