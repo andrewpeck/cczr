@@ -94,24 +94,25 @@ Lines that match no plugin fall back to word-level colorization.
 Semantic color roles are mapped to ANSI styles.  A selection of the most
 visible roles:
 
-| Role       | Style       | Used for                              |
-|------------+-------------+---------------------------------------|
-| Date       | Cyan        | Timestamps                            |
-| Host       | Bold cyan   | Hostnames and IP addresses            |
-| Process    | Bold green  | Process / service names               |
-| Pid        | Green       | Process IDs                           |
-| User       | Bold yellow | Usernames                             |
-| HttpGet    | Bold green  | HTTP GET method                       |
-| HttpPost   | Bold cyan   | HTTP POST method                      |
-| HttpCodes  | Yellow      | 2xx / 3xx status codes                |
-| Error      | Bold red    | 4xx / 5xx, error-level log entries    |
-| Warning    | Bold yellow | Warnings                              |
-| GoodWord   | Bold green  | success, running, connected, …        |
-| BadWord    | Bold red    | error, failed, denied, timeout, …     |
-| Keyword    | Bold yellow | ~INFO~ and other highlighted keywords |
-| Uri        | Bold cyan   | URIs / URLs                           |
-| Mac        | Bold white  | MAC addresses                         |
-| Version    | Bold green  | Version strings (v1.2.3)              |
+| Role      | Style       | Used for                           |
+|-----------+-------------+------------------------------------|
+| Date      | Cyan        | Timestamps                         |
+| Host      | Bold cyan   | Hostnames and IP addresses         |
+| Process   | Bold green  | Process / service names            |
+| Pid       | Green       | Process IDs                        |
+| User      | Bold yellow | Usernames                          |
+| HttpGet   | Bold green  | HTTP GET method                    |
+| HttpPost  | Bold cyan   | HTTP POST method                   |
+| HttpCodes | Yellow      | 2xx / 3xx status codes             |
+| Error     | Bold red    | 4xx / 5xx, error-level log entries |
+| Warning   | Bold yellow | Warnings                           |
+| GoodWord  | Bold green  | success, running, connected, …     |
+| BadWord   | Bold red    | error, failed, denied, timeout, …  |
+| Keyword   | Bold yellow | Tcl commands, highlighted keywords |
+| Info      | Bold cyan   | ~INFO~ log level                   |
+| Uri       | Bold cyan   | URIs / URLs                        |
+| Mac       | Bold white  | MAC addresses                      |
+| Version   | Bold green  | Version strings (v1.2.3)           |
 
 * Word-level fallback
 
@@ -126,7 +127,7 @@ Lines not matched by any plugin are scanned word-by-word for:
 - Timestamps (~HH:MM:SS~) → Date color
 - Hex addresses (~0x…~) → Address color
 - Numbers → Numbers color
-- Keywords: ~INFO~ → bold yellow; ~error~, ~failed~, … → bold red; ~running~, ~success~, … → bold green
+- Keywords: ~INFO~ → bold cyan; ~error~, ~failed~, … → bold red; ~running~, ~success~, … → bold green
 
 The syslog plugin also applies word-level colorization to its message body,
 so keywords like ~INFO~ are highlighted even inside matched syslog lines.
