@@ -434,6 +434,39 @@ fn wordcolor_good_word() {
 }
 
 #[test]
+fn wordcolor_keywords_respect_word_boundaries() {
+    use crate::wordcolor::word_color;
+
+    // A keyword buried inside a longer segment must not match:
+    // "module" in "submodules", "up" in "update", "bus" in "business".
+    assert_eq!(word_color("\"num_submodules\""), Color::Default, "submodules ≠ module");
+    assert_eq!(word_color("update"), Color::Default, "update ≠ up");
+    assert_eq!(word_color("business"), Color::Default, "business ≠ bus");
+
+    // Whole segments still match, including across `_`, `-` and quotes.
+    assert_eq!(word_color("module"), Color::SystemWord, "bare keyword");
+    assert_eq!(word_color("sub_module"), Color::SystemWord, "underscore segment");
+    assert_eq!(word_color("cpu-load"), Color::SystemWord, "hyphen segment");
+    assert_eq!(word_color("\"kernel\""), Color::SystemWord, "quoted json key");
+
+    // Simple inflections of a whole segment still match.
+    assert_eq!(word_color("errors"), Color::BadWord, "plural");
+    assert_eq!(word_color("warnings"), Color::BadWord, "plural gerund");
+    assert_eq!(word_color("modules"), Color::SystemWord, "plural");
+}
+
+#[test]
+fn wordcolor_json_stat_line() {
+    use crate::wordcolor::colorize_words;
+    let out = colorize_words("   \"num_submodules\":       0,");
+    assert!(
+        !contains_colored(&out, Color::SystemWord, "\"num_submodules\""),
+        "num_submodules must not be a system word"
+    );
+    assert!(contains_colored(&out, Color::Numbers, "0"), "number still colored");
+}
+
+#[test]
 fn wordcolor_info_uppercase_only() {
     use crate::wordcolor::colorize_words;
     // Plain INFO

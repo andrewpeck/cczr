@@ -55,18 +55,40 @@ static SYSTEM_WORDS: &[&str] = &[
     "controller", "usb", "pci", "scsi", "raid", "ata",
 ];
 
-fn word_color(word: &str) -> Color {
+/// Inflections tolerated after a keyword, so "errors" still matches "error"
+/// and "warnings" still matches "warn", while "submodules" does not match
+/// "module".
+static SUFFIXES: &[&str] = &["", "s", "d", "es", "ed", "ing", "ings"];
+
+/// Split a token into alphanumeric segments so identifiers and quoted JSON
+/// keys are matched piecewise: `"num_submodules"` → ["num", "submodules"].
+fn segments(word: &str) -> impl Iterator<Item = &str> {
+    word.split(|c: char| !c.is_alphanumeric())
+        .filter(|s| !s.is_empty())
+}
+
+/// True if any segment of `word` is `keyword`, optionally inflected.
+fn has_keyword(word: &str, keywords: &[&str]) -> bool {
+    segments(word).any(|seg| {
+        keywords.iter().any(|&kw| {
+            seg.strip_prefix(kw)
+                .is_some_and(|rest| SUFFIXES.contains(&rest))
+        })
+    })
+}
+
+pub(crate) fn word_color(word: &str) -> Color {
     let lower = word.to_lowercase();
-    if BAD_WORDS.iter().any(|&w| lower.contains(w)) {
+    if has_keyword(&lower, BAD_WORDS) {
         return Color::BadWord;
     }
-    if GOOD_WORDS.iter().any(|&w| lower == w) {
+    if has_keyword(&lower, GOOD_WORDS) {
         return Color::GoodWord;
     }
     if word == "INFO" {
         return Color::Info;
     }
-    if SYSTEM_WORDS.iter().any(|&w| lower.contains(w)) {
+    if has_keyword(&lower, SYSTEM_WORDS) {
         return Color::SystemWord;
     }
     Color::Default
