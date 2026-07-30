@@ -85,11 +85,13 @@ fn has_keyword(word: &str, keywords: &[&str]) -> bool {
 
 pub(crate) fn word_color(word: &str) -> Color {
     let lower = word.to_lowercase();
-    if has_keyword(&lower, BAD_WORDS) {
-        return Color::BadWord;
-    }
-    if has_keyword(&lower, GOOD_WORDS) {
-        return Color::GoodWord;
+    if !lower.contains('_') {
+        if has_keyword(&lower, BAD_WORDS) {
+            return Color::BadWord;
+        }
+        if has_keyword(&lower, GOOD_WORDS) {
+            return Color::GoodWord;
+        }
     }
     if word == "INFO" {
         return Color::Info;

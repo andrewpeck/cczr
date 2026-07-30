@@ -442,6 +442,18 @@ fn wordcolor_pass_fail_statuses() {
 }
 
 #[test]
+fn wordcolor_pass_with_invalid_snake_case_identifier() {
+    use crate::wordcolor::{colorize_words, word_color};
+
+    let out = colorize_words("PASS: invalid_pair_tests_a_72_b_0\nPASS: invalid_pair_tests_a_0_b_72");
+    assert!(contains_colored(&out, Color::GoodWord, "PASS"), "PASS status colored");
+    assert_eq!(word_color("invalid_pair_tests_a_72_b_0"), Color::Default);
+    assert_eq!(word_color("invalid_pair_tests_a_0_b_72"), Color::Default);
+    assert!(!contains_colored(&out, Color::BadWord, "invalid_pair_tests_a_72_b_0"));
+    assert!(!contains_colored(&out, Color::BadWord, "invalid_pair_tests_a_0_b_72"));
+}
+
+#[test]
 fn wordcolor_keywords_respect_word_boundaries() {
     use crate::wordcolor::word_color;
 
