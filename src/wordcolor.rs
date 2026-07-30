@@ -3,6 +3,12 @@ use regex::Regex;
 
 use crate::color::{colorize, Color};
 
+// A double-quoted run on a single line. Matched before everything else so the
+// whole string gets one color instead of the numbers and paths inside it being
+// picked apart. Requires a closing quote, so a stray quote colors nothing.
+static RE_STRING: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#""[^"]*""#).unwrap()
+});
 static RE_EMAIL: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}").unwrap()
 });
@@ -109,6 +115,7 @@ pub fn colorize_words(input: &str) -> String {
         }
     };
 
+    add_spans(&RE_STRING,  Color::String,  input, &mut spans);
     add_spans(&RE_EMAIL,   Color::Email,   input, &mut spans);
     add_spans(&RE_MAC,     Color::Mac,     input, &mut spans);
     add_spans(&RE_URI,     Color::Uri,     input, &mut spans);

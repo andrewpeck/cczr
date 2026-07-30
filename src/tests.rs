@@ -456,6 +456,41 @@ fn wordcolor_keywords_respect_word_boundaries() {
 }
 
 #[test]
+fn wordcolor_quoted_string() {
+    use crate::wordcolor::colorize_words;
+    let out = colorize_words("Analyzing file \"/home/runner/0/hdl/shift_reg.sv\" into library work");
+    assert!(
+        contains_colored(&out, Color::String, "\"/home/runner/0/hdl/shift_reg.sv\""),
+        "quoted string colored as one span, quotes included"
+    );
+    // Nothing inside the string is picked apart by the other matchers.
+    assert!(!contains_colored(&out, Color::Numbers, "0"), "number inside string");
+    assert!(!contains_colored(&out, Color::Dir, "/home/runner/0/hdl/shift_reg.sv"), "path inside string");
+}
+
+#[test]
+fn wordcolor_unterminated_quote() {
+    use crate::wordcolor::colorize_words;
+    // No closing quote → no string span, and the rest of the line still works.
+    let out = colorize_words("say \"hello there 42");
+    // If a string span had matched, an escape would sit between `say ` and `"`.
+    assert!(out.contains("say \"hello"), "stray quote left alone");
+    assert!(contains_colored(&out, Color::Numbers, "42"), "trailing number still colored");
+}
+
+#[test]
+fn vivado_quoted_path_in_message() {
+    let plugins = default_plugins();
+    let line = "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"/build/0/hdl/fmc_settings.sv\" into library work";
+    let out = colorize_line(line, &plugins);
+    assert!(out.contains(&colorize(Color::Info, "INFO")), "level still colored");
+    assert!(
+        contains_colored(&out, Color::String, "\"/build/0/hdl/fmc_settings.sv\""),
+        "quoted path colored inside a vivado message body"
+    );
+}
+
+#[test]
 fn wordcolor_json_stat_line() {
     use crate::wordcolor::colorize_words;
     let out = colorize_words("   \"num_submodules\":       0,");

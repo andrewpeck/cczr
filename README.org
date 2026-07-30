@@ -113,11 +113,14 @@ visible roles:
 | Uri       | Bold cyan   | URIs / URLs                        |
 | Mac       | Bold white  | MAC addresses                      |
 | Version   | Bold green  | Version strings (v1.2.3)           |
+| String    | Green       | Double-quoted strings              |
 
 * Word-level fallback
 
 Lines not matched by any plugin are scanned word-by-word for:
 
+- Double-quoted strings → String color (matched first, so the string is colored
+  as a whole rather than having paths and numbers inside it picked apart)
 - IPv4 addresses → Host color
 - Email addresses → Email color
 - URIs (~https://…~) → Uri color
