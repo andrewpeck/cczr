@@ -50,7 +50,7 @@ static BAD_WORDS: &[&str] = &[
 
 static GOOD_WORDS: &[&str] = &[
     "start", "online", "ready", "complete", "detect", "success",
-    "loaded", "found", "open", "connected", "enabled", "running",
+    "pass", "loaded", "found", "open", "connected", "enabled", "running",
     "operational", "initialized", "launched", "opened", "up",
     "listening", "active", "activated",
 ];
@@ -188,4 +188,3 @@ fn colorize_plain_words(text: &str) -> String {
     }
     out
 }
-

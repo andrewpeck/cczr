@@ -434,6 +434,14 @@ fn wordcolor_good_word() {
 }
 
 #[test]
+fn wordcolor_pass_fail_statuses() {
+    use crate::wordcolor::colorize_words;
+    let out = colorize_words("PASS FAIL");
+    assert!(contains_colored(&out, Color::GoodWord, "PASS"), "PASS status colored");
+    assert!(contains_colored(&out, Color::BadWord, "FAIL"), "FAIL status colored");
+}
+
+#[test]
 fn wordcolor_keywords_respect_word_boundaries() {
     use crate::wordcolor::word_color;
 

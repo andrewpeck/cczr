@@ -130,7 +130,7 @@ Lines not matched by any plugin are scanned word-by-word for:
 - Timestamps (~HH:MM:SS~) → Date color
 - Hex addresses (~0x…~) → Address color
 - Numbers → Numbers color
-- Keywords: ~INFO~ → bold cyan; ~error~, ~failed~, … → bold red; ~running~, ~success~, … → bold green
+- Keywords: ~INFO~ → bold cyan; ~error~, ~failed~, ~FAIL~, … → bold red; ~running~, ~success~, ~PASS~, … → bold green
 
 The syslog plugin also applies word-level colorization to its message body,
 so keywords like ~INFO~ are highlighted even inside matched syslog lines.
