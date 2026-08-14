@@ -1,0 +1,14 @@
+---
+repos:
+  - repo: local
+    hooks:
+      # Formats only the staged .rs files. `cargo fmt --all` would reformat the
+      # whole crate, including files with unstaged edits that pre-commit has
+      # stashed away, which makes restoring the stash conflict and rolls the
+      # fixes back. The edition must be passed explicitly: bare rustfmt assumes
+      # 2015, while this crate is edition 2024.
+      - id: rustfmt
+        name: rustfmt
+        entry: rustfmt --edition 2024
+        language: system
+        types: [rust]
