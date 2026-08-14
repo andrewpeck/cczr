@@ -19,7 +19,14 @@ cat vivado.log | cczr
 
 * Installation
 
-Install directly from GitHub (no local clone needed):
+Download a prebuilt Linux x86_64 binary from the [[https://github.com/andrewpeck/cczr/releases/latest][latest release]]:
+
+#+begin_src sh
+tar xzf cczr-*-x86_64-unknown-linux-gnu.tar.gz
+install -m755 cczr ~/.local/bin/
+#+end_src
+
+Or install directly from GitHub with cargo (no local clone needed):
 
 #+begin_src sh
 cargo install --git https://github.com/andrewpeck/cczr
@@ -146,3 +153,24 @@ cargo build --release
 Tests cover each plugin individually (match / no-match / color assertions)
 plus the full pipeline and the word-level fallback.  Log samples are modelled
 on the [[https://github.com/cornet/ccze][CCZE test corpus]].
+
+After cloning, enable the formatting hook so commits stay ~rustfmt~-clean:
+
+#+begin_src sh
+pre-commit install
+#+end_src
+
+CI runs ~cargo fmt --check~, ~cargo clippy -D warnings~, ~cargo build~ and
+~cargo test~ on every push and pull request to ~main~.
+
+** Cutting a release
+
+Pushing a ~v*~ tag builds a release binary and publishes it as a ~.tar.gz~
+(plus a ~.sha256~) on a new GitHub Release:
+
+#+begin_src sh
+git tag v0.1.0
+git push origin v0.1.0
+#+end_src
+
+Keep ~version~ in =Cargo.toml= in sync with the tag.
