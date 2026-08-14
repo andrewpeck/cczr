@@ -28,8 +28,11 @@ jobs:
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
 
+      # --locked here so a Cargo.lock that has drifted from Cargo.toml fails on
+      # the push to main, rather than surviving until a tag push and breaking
+      # the release build.
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --verbose --locked
 
       - name: Test
-        run: cargo test --verbose
+        run: cargo test --verbose --locked
