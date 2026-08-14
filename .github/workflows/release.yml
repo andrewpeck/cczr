@@ -20,6 +20,21 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      # Cargo.toml is the source of truth for the version; the tag has to agree
+      # with it, or we would ship a tarball named for one version containing a
+      # binary that reports another. Runs before the build so drift fails fast.
+      - name: Check tag matches Cargo.toml
+        run: |
+          set -euo pipefail
+          manifest=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[0].version')
+          if [ "v$manifest" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match Cargo.toml version $manifest"
+            echo "bump version in Cargo.toml (and Cargo.lock) or retag"
+            exit 1
+          fi
+          echo "version $manifest matches tag $GITHUB_REF_NAME"
+
       - name: Test
         run: cargo test --release --locked
 
