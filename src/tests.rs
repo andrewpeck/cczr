@@ -6,7 +6,7 @@
 ///
 /// Log samples are drawn from or closely modelled on the CCZE test corpus:
 ///   https://github.com/cornet/ccze
-use crate::color::{colorize, Color};
+use crate::color::{Color, colorize};
 use crate::plugin::{Plugin, PluginResult};
 use crate::plugins::*;
 use crate::{colorize_line, default_plugins};
@@ -37,7 +37,10 @@ fn contains_colored(output: &str, color: Color, text: &str) -> bool {
 fn syslog_basic() {
     let line = "Jan  5 12:34:56 myhost sshd[1234]: Accepted password for alice";
     let out = matched(Syslog.process(line));
-    assert!(contains_colored(&out, Color::Date, "Jan  5 12:34:56"), "date");
+    assert!(
+        contains_colored(&out, Color::Date, "Jan  5 12:34:56"),
+        "date"
+    );
     assert!(contains_colored(&out, Color::Host, "myhost"), "host");
     assert!(contains_colored(&out, Color::Process, "sshd"), "process");
     assert!(contains_colored(&out, Color::Pid, "1234"), "pid");
@@ -48,7 +51,10 @@ fn syslog_basic() {
 fn syslog_no_pid() {
     let line = "Mar 15 08:00:01 router dhcpd: DHCPREQUEST from 192.168.1.10";
     let out = matched(Syslog.process(line));
-    assert!(contains_colored(&out, Color::Date, "Mar 15 08:00:01"), "date");
+    assert!(
+        contains_colored(&out, Color::Date, "Mar 15 08:00:01"),
+        "date"
+    );
     assert!(contains_colored(&out, Color::Host, "router"), "host");
     assert!(contains_colored(&out, Color::Process, "dhcpd"), "process");
 }
@@ -62,7 +68,8 @@ fn syslog_double_space_day() {
 
 #[test]
 fn syslog_no_match_on_apache_access() {
-    let line = r#"127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /index.html HTTP/1.0" 200 2326"#;
+    let line =
+        r#"127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /index.html HTTP/1.0" 200 2326"#;
     assert_no_match(Syslog.process(line));
 }
 
@@ -70,13 +77,20 @@ fn syslog_no_match_on_apache_access() {
 
 #[test]
 fn httpd_access_get() {
-    let line = r#"127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /index.html HTTP/1.0" 200 2326"#;
+    let line =
+        r#"127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /index.html HTTP/1.0" 200 2326"#;
     let out = matched(Httpd.process(line));
     assert!(contains_colored(&out, Color::Host, "127.0.0.1"), "host");
     assert!(contains_colored(&out, Color::User, "frank"), "user");
-    assert!(contains_colored(&out, Color::Date, "[10/Oct/2000:13:55:36 -0700]"), "date");
+    assert!(
+        contains_colored(&out, Color::Date, "[10/Oct/2000:13:55:36 -0700]"),
+        "date"
+    );
     assert!(contains_colored(&out, Color::HttpGet, "GET"), "method");
-    assert!(contains_colored(&out, Color::HttpCodes, "200"), "status 2xx");
+    assert!(
+        contains_colored(&out, Color::HttpCodes, "200"),
+        "status 2xx"
+    );
     assert!(contains_colored(&out, Color::GetSize, "2326"), "size");
 }
 
@@ -84,22 +98,35 @@ fn httpd_access_get() {
 fn httpd_access_404() {
     let line = r#"10.0.0.1 - - [01/Jan/2024:00:00:00 +0000] "GET /missing HTTP/1.1" 404 512"#;
     let out = matched(Httpd.process(line));
-    assert!(contains_colored(&out, Color::Error, "404"), "404 → Error color");
+    assert!(
+        contains_colored(&out, Color::Error, "404"),
+        "404 → Error color"
+    );
 }
 
 #[test]
 fn httpd_access_post() {
-    let line = r#"192.168.0.5 - admin [15/Mar/2024:10:20:30 +0100] "POST /api/data HTTP/1.1" 201 128"#;
+    let line =
+        r#"192.168.0.5 - admin [15/Mar/2024:10:20:30 +0100] "POST /api/data HTTP/1.1" 201 128"#;
     let out = matched(Httpd.process(line));
-    assert!(contains_colored(&out, Color::HttpPost, "POST"), "POST method color");
+    assert!(
+        contains_colored(&out, Color::HttpPost, "POST"),
+        "POST method color"
+    );
 }
 
 #[test]
 fn httpd_error_log() {
     let line = "[Wed Jan 15 12:00:00 2025] [error] File not found: /var/www/missing.html";
     let out = matched(Httpd.process(line));
-    assert!(contains_colored(&out, Color::Date, "[Wed Jan 15 12:00:00 2025]"), "error log date");
-    assert!(contains_colored(&out, Color::Error, "[error]"), "error level");
+    assert!(
+        contains_colored(&out, Color::Date, "[Wed Jan 15 12:00:00 2025]"),
+        "error log date"
+    );
+    assert!(
+        contains_colored(&out, Color::Error, "[error]"),
+        "error level"
+    );
     assert!(out.contains("File not found"), "message preserved");
 }
 
@@ -115,11 +142,17 @@ fn httpd_no_match_on_syslog() {
 fn postfix_basic() {
     let line = "Jan 15 09:00:01 mail postfix/smtp[456]: 3A1B2C3D4E: to=<user@example.com>, relay=mx.example.com[1.2.3.4]:25, status=sent";
     let out = matched(Postfix.process(line));
-    assert!(contains_colored(&out, Color::Date, "Jan 15 09:00:01"), "date");
+    assert!(
+        contains_colored(&out, Color::Date, "Jan 15 09:00:01"),
+        "date"
+    );
     assert!(contains_colored(&out, Color::Host, "mail"), "host");
     assert!(contains_colored(&out, Color::Service, "smtp"), "service");
     assert!(contains_colored(&out, Color::Pid, "456"), "pid");
-    assert!(contains_colored(&out, Color::UniqueId, "3A1B2C3D4E"), "queue id");
+    assert!(
+        contains_colored(&out, Color::UniqueId, "3A1B2C3D4E"),
+        "queue id"
+    );
 }
 
 #[test]
@@ -135,7 +168,10 @@ fn squid_access_hit() {
     let out = matched(Squid.process(line));
     assert!(contains_colored(&out, Color::Date, "1234567890.123"), "ts");
     assert!(contains_colored(&out, Color::Host, "192.168.1.1"), "client");
-    assert!(contains_colored(&out, Color::ProxyHit, "TCP_HIT"), "cache result");
+    assert!(
+        contains_colored(&out, Color::ProxyHit, "TCP_HIT"),
+        "cache result"
+    );
     assert!(contains_colored(&out, Color::HttpCodes, "200"), "status");
     assert!(contains_colored(&out, Color::HttpGet, "GET"), "method");
 }
@@ -144,7 +180,10 @@ fn squid_access_hit() {
 fn squid_access_miss() {
     let line = "1234567890.000   100 10.0.0.2 TCP_MISS/404 512 GET http://missing.test/ - NONE/- -";
     let out = matched(Squid.process(line));
-    assert!(contains_colored(&out, Color::ProxyMiss, "TCP_MISS"), "cache miss");
+    assert!(
+        contains_colored(&out, Color::ProxyMiss, "TCP_MISS"),
+        "cache miss"
+    );
     assert!(contains_colored(&out, Color::Error, "404"), "404 status");
 }
 
@@ -152,7 +191,10 @@ fn squid_access_miss() {
 fn squid_cache_log() {
     let line = "2024/01/15 12:00:00| Starting Squid Cache version 5.0";
     let out = matched(Squid.process(line));
-    assert!(contains_colored(&out, Color::Date, "2024/01/15 12:00:00|"), "cache date");
+    assert!(
+        contains_colored(&out, Color::Date, "2024/01/15 12:00:00|"),
+        "cache date"
+    );
 }
 
 #[test]
@@ -166,8 +208,14 @@ fn squid_no_match() {
 fn exim_delivery() {
     let line = "2024-01-15 12:00:00 1rABCD-000001-00 => user@example.com R=dnslookup T=remote_smtp";
     let out = matched(Exim.process(line));
-    assert!(contains_colored(&out, Color::Date, "2024-01-15 12:00:00"), "date");
-    assert!(contains_colored(&out, Color::UniqueId, "1rABCD-000001-00"), "id");
+    assert!(
+        contains_colored(&out, Color::Date, "2024-01-15 12:00:00"),
+        "date"
+    );
+    assert!(
+        contains_colored(&out, Color::UniqueId, "1rABCD-000001-00"),
+        "id"
+    );
     assert!(contains_colored(&out, Color::Outgoing, "=>"), "outgoing");
 }
 
@@ -189,17 +237,29 @@ fn exim_no_match() {
 fn dpkg_status() {
     let line = "2024-01-15 12:00:00 status installed curl 7.88.1-1";
     let out = matched(Dpkg.process(line));
-    assert!(contains_colored(&out, Color::Date, "2024-01-15 12:00:00"), "date");
-    assert!(contains_colored(&out, Color::PkgStatus, "installed"), "status");
+    assert!(
+        contains_colored(&out, Color::Date, "2024-01-15 12:00:00"),
+        "date"
+    );
+    assert!(
+        contains_colored(&out, Color::PkgStatus, "installed"),
+        "status"
+    );
     assert!(contains_colored(&out, Color::Package, "curl"), "package");
-    assert!(contains_colored(&out, Color::Version, "7.88.1-1"), "version");
+    assert!(
+        contains_colored(&out, Color::Version, "7.88.1-1"),
+        "version"
+    );
 }
 
 #[test]
 fn dpkg_install() {
     let line = "2024-01-15 12:00:00 install curl <none> 7.88.1-1";
     let out = matched(Dpkg.process(line));
-    assert!(contains_colored(&out, Color::GoodWord, "install"), "install → GoodWord");
+    assert!(
+        contains_colored(&out, Color::GoodWord, "install"),
+        "install → GoodWord"
+    );
     assert!(contains_colored(&out, Color::Package, "curl"), "package");
 }
 
@@ -207,15 +267,24 @@ fn dpkg_install() {
 fn dpkg_remove() {
     let line = "2024-01-15 12:00:00 remove curl 7.88.1-1 <none>";
     let out = matched(Dpkg.process(line));
-    assert!(contains_colored(&out, Color::BadWord, "remove"), "remove → BadWord");
+    assert!(
+        contains_colored(&out, Color::BadWord, "remove"),
+        "remove → BadWord"
+    );
 }
 
 #[test]
 fn dpkg_conffile() {
     let line = "2024-01-15 12:00:00 conffile /etc/curl/curlrc install";
     let out = matched(Dpkg.process(line));
-    assert!(contains_colored(&out, Color::File, "/etc/curl/curlrc"), "conffile path");
-    assert!(contains_colored(&out, Color::Keyword, "install"), "decision");
+    assert!(
+        contains_colored(&out, Color::File, "/etc/curl/curlrc"),
+        "conffile path"
+    );
+    assert!(
+        contains_colored(&out, Color::Keyword, "install"),
+        "decision"
+    );
 }
 
 #[test]
@@ -229,15 +298,28 @@ fn dpkg_no_match() {
 fn php_fatal() {
     let line = "[15-Jan-2024 12:00:00] PHP Fatal error: Call to undefined function foo()";
     let out = matched(Php.process(line));
-    assert!(contains_colored(&out, Color::Date, "[15-Jan-2024 12:00:00]"), "date");
-    assert!(contains_colored(&out, Color::Error, "Fatal error: Call to undefined function foo()"), "fatal msg");
+    assert!(
+        contains_colored(&out, Color::Date, "[15-Jan-2024 12:00:00]"),
+        "date"
+    );
+    assert!(
+        contains_colored(
+            &out,
+            Color::Error,
+            "Fatal error: Call to undefined function foo()"
+        ),
+        "fatal msg"
+    );
 }
 
 #[test]
 fn php_warning() {
     let line = "[15-Jan-2024 12:00:00] PHP Warning: Division by zero";
     let out = matched(Php.process(line));
-    assert!(contains_colored(&out, Color::Warning, "Warning: Division by zero"), "warning msg");
+    assert!(
+        contains_colored(&out, Color::Warning, "Warning: Division by zero"),
+        "warning msg"
+    );
 }
 
 #[test]
@@ -251,7 +333,10 @@ fn php_no_match() {
 fn vsftpd_basic() {
     let line = "Mon Jan 15 12:00:00 2024 [pid 789] [alice] CONNECT: Client 192.168.1.1";
     let out = matched(Vsftpd.process(line));
-    assert!(contains_colored(&out, Color::Date, "Mon Jan 15 12:00:00 2024"), "date");
+    assert!(
+        contains_colored(&out, Color::Date, "Mon Jan 15 12:00:00 2024"),
+        "date"
+    );
     assert!(contains_colored(&out, Color::Pid, "789"), "pid");
     assert!(contains_colored(&out, Color::User, "alice"), "user");
     assert!(out.contains("CONNECT"), "message");
@@ -298,12 +383,16 @@ fn sulog_no_match() {
 
 #[test]
 fn ulogd_netfilter() {
-    let line = "IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=1.2.3.4 DST=5.6.7.8 PROTO=TCP SPT=1234 DPT=80";
+    let line =
+        "IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=1.2.3.4 DST=5.6.7.8 PROTO=TCP SPT=1234 DPT=80";
     let out = matched(Ulogd.process(line));
     assert!(contains_colored(&out, Color::Field, "SRC"), "SRC field");
     assert!(contains_colored(&out, Color::Host, "1.2.3.4"), "src ip");
     assert!(contains_colored(&out, Color::Host, "5.6.7.8"), "dst ip");
-    assert!(contains_colored(&out, Color::Mac, "00:11:22:33:44:55"), "mac");
+    assert!(
+        contains_colored(&out, Color::Mac, "00:11:22:33:44:55"),
+        "mac"
+    );
     assert!(contains_colored(&out, Color::Protocol, "TCP"), "protocol");
     assert!(contains_colored(&out, Color::Service, "eth0"), "interface");
 }
@@ -320,7 +409,10 @@ fn vivado_info() {
     let line = "INFO: [Netlist 29-17] Analyzing 638 Unisim elements for replacement";
     let out = matched(Vivado.process(line));
     assert!(contains_colored(&out, Color::Info, "INFO"), "INFO level");
-    assert!(contains_colored(&out, Color::Ident, "[Netlist 29-17]"), "tag");
+    assert!(
+        contains_colored(&out, Color::Ident, "[Netlist 29-17]"),
+        "tag"
+    );
     assert!(out.contains("Analyzing"), "message body");
 }
 
@@ -328,34 +420,163 @@ fn vivado_info() {
 fn vivado_warning() {
     let line = "WARNING: [Board 49-26] cannot add Board Part xilinx.com:vek280:part0:1.0";
     let out = matched(Vivado.process(line));
-    assert!(contains_colored(&out, Color::Warning, "WARNING"), "WARNING level");
+    assert!(
+        contains_colored(&out, Color::Warning, "WARNING"),
+        "WARNING level"
+    );
     assert!(contains_colored(&out, Color::Ident, "[Board 49-26]"), "tag");
 }
 
 #[test]
 fn vivado_critical_warning() {
-    let line = "CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements.";
+    let line =
+        "CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements.";
     let out = matched(Vivado.process(line));
-    assert!(contains_colored(&out, Color::Error, "CRITICAL WARNING"), "CRITICAL WARNING level");
-    assert!(contains_colored(&out, Color::Error, "[Timing 38-282]"), "tag is also error color");
+    assert!(
+        contains_colored(&out, Color::Error, "CRITICAL WARNING"),
+        "CRITICAL WARNING level"
+    );
+    assert!(
+        contains_colored(&out, Color::Error, "[Timing 38-282]"),
+        "tag is also error color"
+    );
+}
+
+#[test]
+fn vivado_broad_message_tags() {
+    let line = "ERROR: [DRC PDRC-179] The computed value 125.000 MHz for cell eth_infra_inst/eth/sgmii/U0/core_clocking_i/mmcme3_adv_inst is (CLKFBOUT_MULT_F/(CLKIN1_PERIOD * DIVCLK_DIVIDE)) and falls outside the operating range for this device.";
+    let out = matched(Vivado.process(line));
+    assert!(contains_colored(&out, Color::Error, "ERROR"), "ERROR level");
+    assert!(
+        contains_colored(&out, Color::Error, "[DRC PDRC-179]"),
+        "DRC tag"
+    );
+    assert!(
+        contains_colored(&out, Color::Numbers, "125.000"),
+        "numeric value"
+    );
+    assert!(
+        !contains_colored(&out, Color::SystemWord, "device"),
+        "no generic word color"
+    );
+    assert!(
+        !contains_colored(
+            &out,
+            Color::Dir,
+            "/eth/sgmii/U0/core_clocking_i/mmcme3_adv_inst"
+        ),
+        "hierarchy is not a path"
+    );
+    assert!(
+        !contains_colored(&out, Color::Dir, "/(CLKIN1_PERIOD"),
+        "division is not a path"
+    );
+
+    let line =
+        "CRITICAL WARNING: [Hog:GetVerFromSHA-0] No Hog version tags found in this repository.";
+    let out = matched(Vivado.process(line));
+    assert!(
+        contains_colored(&out, Color::Error, "CRITICAL WARNING"),
+        "Hog level"
+    );
+    assert!(
+        contains_colored(&out, Color::Error, "[Hog:GetVerFromSHA-0]"),
+        "Hog tag"
+    );
+    assert!(
+        !contains_colored(&out, Color::GoodWord, "found"),
+        "no generic good word"
+    );
+}
+
+#[test]
+fn vivado_file_location_in_message() {
+    let line = "WARNING: [Constraints 18-619] A clock already exists. [/home/apeck/sysarch-logic/hw_test_stand/kcu105/xdc/timing.xdc:33]";
+    let out = matched(Vivado.process(line));
+    assert!(
+        contains_colored(
+            &out,
+            Color::Dir,
+            "[/home/apeck/sysarch-logic/hw_test_stand/kcu105/xdc/timing.xdc:33]"
+        ),
+        "file location"
+    );
+}
+
+#[test]
+fn vivado_labeled_detail_line() {
+    let line = "New: create_clock -period 8.000 -name eth_clk125 [get_ports sgmii_clk_p], [/home/apeck/sysarch-logic/hw_test_stand/kcu105/xdc/timing.xdc:35]";
+    let out = matched(Vivado.process(line));
+    assert!(contains_colored(&out, Color::Field, "New"), "detail label");
+    assert!(
+        contains_colored(&out, Color::Numbers, "8.000"),
+        "period value"
+    );
+    assert!(
+        contains_colored(
+            &out,
+            Color::Dir,
+            "[/home/apeck/sysarch-logic/hw_test_stand/kcu105/xdc/timing.xdc:35]"
+        ),
+        "file location"
+    );
+    assert!(
+        !contains_colored(&out, Color::GoodWord, "8.000"),
+        "period is not a good word"
+    );
+}
+
+#[test]
+fn vivado_timing_summary_slack_values() {
+    let line = "INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.294  | TNS=0.000  | WHS=-0.374 | THS=-85.560|";
+    let out = matched(Vivado.process(line));
+    assert!(
+        contains_colored(&out, Color::GoodWord, "0.294"),
+        "positive WNS"
+    );
+    assert!(contains_colored(&out, Color::Numbers, "0.000"), "zero TNS");
+    assert!(
+        contains_colored(&out, Color::BadWord, "-0.374"),
+        "negative WHS"
+    );
+    assert!(
+        contains_colored(&out, Color::BadWord, "-85.560"),
+        "negative THS"
+    );
+    assert!(
+        !out.contains("-\x1b[1;32m0.374"),
+        "minus sign kept with red value"
+    );
 }
 
 #[test]
 fn vivado_timing_line() {
     let line = "Netlist sorting complete. Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.11 . Memory (MB): peak = 10328.246 ; gain = 0.000 ; free physical = 4720 ; free virtual = 57146";
     let out = matched(Vivado.process(line));
-    assert!(contains_colored(&out, Color::GetTime, "00:00:00.11"), "cpu time");
-    assert!(contains_colored(&out, Color::Size,    "10328.246"),   "peak memory");
-    assert!(contains_colored(&out, Color::Numbers, "4720"),        "free physical");
+    assert!(
+        contains_colored(&out, Color::GetTime, "00:00:00.11"),
+        "cpu time"
+    );
+    assert!(
+        contains_colored(&out, Color::Size, "10328.246"),
+        "peak memory"
+    );
+    assert!(
+        contains_colored(&out, Color::Numbers, "4720"),
+        "free physical"
+    );
 }
 
 #[test]
 fn vivado_restored_from_archive() {
     let line = "Restored from archive | CPU: 0.830000 secs | Memory: 16.318893 MB |";
     let out = matched(Vivado.process(line));
-    assert!(contains_colored(&out, Color::GoodWord, "Restored from archive"), "label");
-    assert!(contains_colored(&out, Color::GetTime,  "0.830000"), "cpu");
-    assert!(contains_colored(&out, Color::Size,     "16.318893"), "memory");
+    assert!(
+        contains_colored(&out, Color::GoodWord, "Restored from archive"),
+        "label"
+    );
+    assert!(contains_colored(&out, Color::GetTime, "0.830000"), "cpu");
+    assert!(contains_colored(&out, Color::Size, "16.318893"), "memory");
 }
 
 #[test]
@@ -377,7 +598,10 @@ fn vivado_header_kv() {
 fn vivado_tcl_command() {
     let line = "open_project Projects/driver/driver.xpr";
     let out = matched(Vivado.process(line));
-    assert!(contains_colored(&out, Color::Keyword, "open_project"), "tcl command");
+    assert!(
+        contains_colored(&out, Color::Keyword, "open_project"),
+        "tcl command"
+    );
     assert!(out.contains("Projects/driver/driver.xpr"), "args preserved");
 }
 
@@ -385,7 +609,53 @@ fn vivado_tcl_command() {
 fn vivado_tcl_set_property() {
     let line = "set_property MAX_FANOUT 32 [get_nets reset]";
     let out = matched(Vivado.process(line));
-    assert!(contains_colored(&out, Color::Keyword, "set_property"), "tcl command");
+    assert!(
+        contains_colored(&out, Color::Keyword, "set_property"),
+        "tcl command"
+    );
+}
+
+#[test]
+fn vivado_summary_and_status_lines() {
+    let out = matched(
+        Vivado.process("160 Infos, 7 Warnings, 23 Critical Warnings and 2 Errors encountered."),
+    );
+    assert!(
+        contains_colored(&out, Color::Info, "160 Infos"),
+        "info count"
+    );
+    assert!(
+        contains_colored(&out, Color::Warning, "7 Warnings"),
+        "warning count"
+    );
+    assert!(
+        contains_colored(&out, Color::Error, "23 Critical Warnings"),
+        "critical warning count"
+    );
+    assert!(
+        contains_colored(&out, Color::Error, "2 Errors"),
+        "error count"
+    );
+
+    let out = matched(Vivado.process("route_design completed successfully"));
+    assert!(
+        contains_colored(&out, Color::Keyword, "route_design"),
+        "successful command"
+    );
+    assert!(
+        contains_colored(&out, Color::GoodWord, "completed successfully"),
+        "success status"
+    );
+
+    let out = matched(Vivado.process("write_bitstream failed"));
+    assert!(
+        contains_colored(&out, Color::Keyword, "write_bitstream"),
+        "failed command"
+    );
+    assert!(
+        contains_colored(&out, Color::Error, "failed"),
+        "failure status"
+    );
 }
 
 #[test]
@@ -398,9 +668,13 @@ fn vivado_no_match_on_plain_line() {
 #[test]
 fn vivado_pipeline_integration() {
     let plugins = default_plugins();
-    let line = "CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements.";
+    let line =
+        "CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements.";
     let out = colorize_line(line, &plugins);
-    assert!(contains_colored(&out, Color::Error, "CRITICAL WARNING"), "pipeline vivado critical");
+    assert!(
+        contains_colored(&out, Color::Error, "CRITICAL WARNING"),
+        "pipeline vivado critical"
+    );
 }
 
 // ─── Word colorizer fallback ─────────────────────────────────────────────────
@@ -409,48 +683,78 @@ fn vivado_pipeline_integration() {
 fn wordcolor_ip() {
     use crate::wordcolor::colorize_words;
     let out = colorize_words("Connection from 192.168.1.1 refused");
-    assert!(contains_colored(&out, Color::Host, "192.168.1.1"), "IP colored");
+    assert!(
+        contains_colored(&out, Color::Host, "192.168.1.1"),
+        "IP colored"
+    );
 }
 
 #[test]
 fn wordcolor_email() {
     use crate::wordcolor::colorize_words;
     let out = colorize_words("sent to admin@example.com ok");
-    assert!(out.contains(&colorize(Color::Email, "admin@example.com")), "email colored");
+    assert!(
+        out.contains(&colorize(Color::Email, "admin@example.com")),
+        "email colored"
+    );
 }
 
 #[test]
 fn wordcolor_bad_word() {
     use crate::wordcolor::colorize_words;
     let out = colorize_words("connection failed");
-    assert!(contains_colored(&out, Color::BadWord, "failed"), "bad word colored");
+    assert!(
+        contains_colored(&out, Color::BadWord, "failed"),
+        "bad word colored"
+    );
 }
 
 #[test]
 fn wordcolor_good_word() {
     use crate::wordcolor::colorize_words;
     let out = colorize_words("service running normally");
-    assert!(contains_colored(&out, Color::GoodWord, "running"), "good word colored");
+    assert!(
+        contains_colored(&out, Color::GoodWord, "running"),
+        "good word colored"
+    );
 }
 
 #[test]
 fn wordcolor_pass_fail_statuses() {
     use crate::wordcolor::colorize_words;
     let out = colorize_words("PASS FAIL");
-    assert!(contains_colored(&out, Color::GoodWord, "PASS"), "PASS status colored");
-    assert!(contains_colored(&out, Color::BadWord, "FAIL"), "FAIL status colored");
+    assert!(
+        contains_colored(&out, Color::GoodWord, "PASS"),
+        "PASS status colored"
+    );
+    assert!(
+        contains_colored(&out, Color::BadWord, "FAIL"),
+        "FAIL status colored"
+    );
 }
 
 #[test]
 fn wordcolor_pass_with_invalid_snake_case_identifier() {
     use crate::wordcolor::{colorize_words, word_color};
 
-    let out = colorize_words("PASS: invalid_pair_tests_a_72_b_0\nPASS: invalid_pair_tests_a_0_b_72");
-    assert!(contains_colored(&out, Color::GoodWord, "PASS"), "PASS status colored");
+    let out =
+        colorize_words("PASS: invalid_pair_tests_a_72_b_0\nPASS: invalid_pair_tests_a_0_b_72");
+    assert!(
+        contains_colored(&out, Color::GoodWord, "PASS"),
+        "PASS status colored"
+    );
     assert_eq!(word_color("invalid_pair_tests_a_72_b_0"), Color::Default);
     assert_eq!(word_color("invalid_pair_tests_a_0_b_72"), Color::Default);
-    assert!(!contains_colored(&out, Color::BadWord, "invalid_pair_tests_a_72_b_0"));
-    assert!(!contains_colored(&out, Color::BadWord, "invalid_pair_tests_a_0_b_72"));
+    assert!(!contains_colored(
+        &out,
+        Color::BadWord,
+        "invalid_pair_tests_a_72_b_0"
+    ));
+    assert!(!contains_colored(
+        &out,
+        Color::BadWord,
+        "invalid_pair_tests_a_0_b_72"
+    ));
 }
 
 #[test]
@@ -459,15 +763,27 @@ fn wordcolor_keywords_respect_word_boundaries() {
 
     // A keyword buried inside a longer segment must not match:
     // "module" in "submodules", "up" in "update", "bus" in "business".
-    assert_eq!(word_color("\"num_submodules\""), Color::Default, "submodules ≠ module");
+    assert_eq!(
+        word_color("\"num_submodules\""),
+        Color::Default,
+        "submodules ≠ module"
+    );
     assert_eq!(word_color("update"), Color::Default, "update ≠ up");
     assert_eq!(word_color("business"), Color::Default, "business ≠ bus");
 
     // Whole segments still match, including across `_`, `-` and quotes.
     assert_eq!(word_color("module"), Color::SystemWord, "bare keyword");
-    assert_eq!(word_color("sub_module"), Color::SystemWord, "underscore segment");
+    assert_eq!(
+        word_color("sub_module"),
+        Color::SystemWord,
+        "underscore segment"
+    );
     assert_eq!(word_color("cpu-load"), Color::SystemWord, "hyphen segment");
-    assert_eq!(word_color("\"kernel\""), Color::SystemWord, "quoted json key");
+    assert_eq!(
+        word_color("\"kernel\""),
+        Color::SystemWord,
+        "quoted json key"
+    );
 
     // Simple inflections of a whole segment still match.
     assert_eq!(word_color("errors"), Color::BadWord, "plural");
@@ -478,14 +794,21 @@ fn wordcolor_keywords_respect_word_boundaries() {
 #[test]
 fn wordcolor_quoted_string() {
     use crate::wordcolor::colorize_words;
-    let out = colorize_words("Analyzing file \"/home/runner/0/hdl/shift_reg.sv\" into library work");
+    let out =
+        colorize_words("Analyzing file \"/home/runner/0/hdl/shift_reg.sv\" into library work");
     assert!(
         contains_colored(&out, Color::String, "\"/home/runner/0/hdl/shift_reg.sv\""),
         "quoted string colored as one span, quotes included"
     );
     // Nothing inside the string is picked apart by the other matchers.
-    assert!(!contains_colored(&out, Color::Numbers, "0"), "number inside string");
-    assert!(!contains_colored(&out, Color::Dir, "/home/runner/0/hdl/shift_reg.sv"), "path inside string");
+    assert!(
+        !contains_colored(&out, Color::Numbers, "0"),
+        "number inside string"
+    );
+    assert!(
+        !contains_colored(&out, Color::Dir, "/home/runner/0/hdl/shift_reg.sv"),
+        "path inside string"
+    );
 }
 
 #[test]
@@ -495,7 +818,10 @@ fn wordcolor_unterminated_quote() {
     let out = colorize_words("say \"hello there 42");
     // If a string span had matched, an escape would sit between `say ` and `"`.
     assert!(out.contains("say \"hello"), "stray quote left alone");
-    assert!(contains_colored(&out, Color::Numbers, "42"), "trailing number still colored");
+    assert!(
+        contains_colored(&out, Color::Numbers, "42"),
+        "trailing number still colored"
+    );
 }
 
 #[test]
@@ -503,7 +829,10 @@ fn vivado_quoted_path_in_message() {
     let plugins = default_plugins();
     let line = "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"/build/0/hdl/fmc_settings.sv\" into library work";
     let out = colorize_line(line, &plugins);
-    assert!(out.contains(&colorize(Color::Info, "INFO")), "level still colored");
+    assert!(
+        out.contains(&colorize(Color::Info, "INFO")),
+        "level still colored"
+    );
     assert!(
         contains_colored(&out, Color::String, "\"/build/0/hdl/fmc_settings.sv\""),
         "quoted path colored inside a vivado message body"
@@ -518,7 +847,10 @@ fn wordcolor_json_stat_line() {
         !contains_colored(&out, Color::SystemWord, "\"num_submodules\""),
         "num_submodules must not be a system word"
     );
-    assert!(contains_colored(&out, Color::Numbers, "0"), "number still colored");
+    assert!(
+        contains_colored(&out, Color::Numbers, "0"),
+        "number still colored"
+    );
 }
 
 #[test]
@@ -526,15 +858,27 @@ fn wordcolor_info_uppercase_only() {
     use crate::wordcolor::colorize_words;
     // Plain INFO
     let out = colorize_words("2024-01-01 INFO server started");
-    assert!(out.contains(&colorize(Color::Info, "INFO")), "INFO should be Info color");
+    assert!(
+        out.contains(&colorize(Color::Info, "INFO")),
+        "INFO should be Info color"
+    );
     // INFO: with trailing colon (Vivado / common tool log format)
     let out2 = colorize_words("INFO: [Netlist 29-17] Analyzing elements");
-    assert!(out2.contains(&colorize(Color::Info, "INFO")), "INFO: should highlight INFO");
+    assert!(
+        out2.contains(&colorize(Color::Info, "INFO")),
+        "INFO: should highlight INFO"
+    );
     // lowercase and mixed-case must not be highlighted
     let out3 = colorize_words("info server started");
-    assert!(!out3.contains(&colorize(Color::Info, "info")), "info must not be highlighted");
+    assert!(
+        !out3.contains(&colorize(Color::Info, "info")),
+        "info must not be highlighted"
+    );
     let out4 = colorize_words("Info server started");
-    assert!(!out4.contains(&colorize(Color::Info, "Info")), "Info must not be highlighted");
+    assert!(
+        !out4.contains(&colorize(Color::Info, "Info")),
+        "Info must not be highlighted"
+    );
 }
 
 #[test]
@@ -543,21 +887,30 @@ fn wordcolor_info_in_syslog_message() {
     let plugins = default_plugins();
     let line = "Jan 15 12:00:00 myhost myapp[123]: INFO: something started";
     let out = colorize_line(line, &plugins);
-    assert!(out.contains(&colorize(Color::Info, "INFO")), "INFO in syslog msg body");
+    assert!(
+        out.contains(&colorize(Color::Info, "INFO")),
+        "INFO in syslog msg body"
+    );
 }
 
 #[test]
 fn wordcolor_uri() {
     use crate::wordcolor::colorize_words;
     let out = colorize_words("see https://example.com/path for details");
-    assert!(out.contains(&colorize(Color::Uri, "https://example.com/path")), "uri colored");
+    assert!(
+        out.contains(&colorize(Color::Uri, "https://example.com/path")),
+        "uri colored"
+    );
 }
 
 #[test]
 fn wordcolor_version() {
     use crate::wordcolor::colorize_words;
     let out = colorize_words("upgraded to v3.14.1 successfully");
-    assert!(out.contains(&colorize(Color::Version, "v3.14.1")), "version colored");
+    assert!(
+        out.contains(&colorize(Color::Version, "v3.14.1")),
+        "version colored"
+    );
 }
 
 // ─── Full pipeline (colorize_line) ───────────────────────────────────────────
@@ -567,7 +920,10 @@ fn pipeline_picks_syslog() {
     let plugins = default_plugins();
     let line = "Feb 28 23:59:59 fileserver crond[99]: job started";
     let out = colorize_line(line, &plugins);
-    assert!(contains_colored(&out, Color::Process, "crond"), "pipeline → syslog");
+    assert!(
+        contains_colored(&out, Color::Process, "crond"),
+        "pipeline → syslog"
+    );
 }
 
 #[test]
@@ -575,7 +931,10 @@ fn pipeline_picks_httpd() {
     let plugins = default_plugins();
     let line = r#"10.0.0.1 - - [01/Jan/2024:00:00:00 +0000] "GET / HTTP/1.1" 200 1024"#;
     let out = colorize_line(line, &plugins);
-    assert!(contains_colored(&out, Color::HttpGet, "GET"), "pipeline → httpd");
+    assert!(
+        contains_colored(&out, Color::HttpGet, "GET"),
+        "pipeline → httpd"
+    );
 }
 
 #[test]
@@ -583,8 +942,14 @@ fn pipeline_falls_back_to_wordcolor() {
     let plugins = default_plugins();
     let line = "something completely unstructured with error and 192.168.0.1";
     let out = colorize_line(line, &plugins);
-    assert!(contains_colored(&out, Color::BadWord, "error"), "fallback bad word");
-    assert!(contains_colored(&out, Color::Host, "192.168.0.1"), "fallback ip");
+    assert!(
+        contains_colored(&out, Color::BadWord, "error"),
+        "fallback bad word"
+    );
+    assert!(
+        contains_colored(&out, Color::Host, "192.168.0.1"),
+        "fallback ip"
+    );
 }
 
 #[test]

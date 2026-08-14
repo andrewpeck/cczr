@@ -1,13 +1,12 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::color::{colorize, Color};
+use crate::color::{Color, colorize};
 use crate::plugin::{Plugin, PluginResult, PluginType};
 
 // 2024-01-15 12:34:56 status <state> <pkg> <version>
-static RE_STATUS: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^([-\d]{10}\s[:\d]{8})\sstatus\s(\S+)\s(\S+)\s(\S+)$").unwrap()
-});
+static RE_STATUS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^([-\d]{10}\s[:\d]{8})\sstatus\s(\S+)\s(\S+)\s(\S+)$").unwrap());
 
 // 2024-01-15 12:34:56 install|upgrade|remove|purge <pkg> <old> <new>
 static RE_ACTION: Lazy<Regex> = Lazy::new(|| {
@@ -16,22 +15,25 @@ static RE_ACTION: Lazy<Regex> = Lazy::new(|| {
 });
 
 // 2024-01-15 12:34:56 conffile <file> install|keep
-static RE_CONFFILE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^([-\d]{10}\s[:\d]{8})\sconffile\s(\S+)\s(install|keep)$").unwrap()
-});
+static RE_CONFFILE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^([-\d]{10}\s[:\d]{8})\sconffile\s(\S+)\s(install|keep)$").unwrap());
 
 pub struct Dpkg;
 
 impl Plugin for Dpkg {
-    fn name(&self) -> &'static str { "dpkg" }
-    fn kind(&self) -> PluginType { PluginType::Full }
+    fn name(&self) -> &'static str {
+        "dpkg"
+    }
+    fn kind(&self) -> PluginType {
+        PluginType::Full
+    }
 
     fn process(&self, line: &str) -> PluginResult {
         if let Some(caps) = RE_STATUS.captures(line) {
-            let ts    = caps.get(1).map_or("", |m| m.as_str());
+            let ts = caps.get(1).map_or("", |m| m.as_str());
             let state = caps.get(2).map_or("", |m| m.as_str());
-            let pkg   = caps.get(3).map_or("", |m| m.as_str());
-            let ver   = caps.get(4).map_or("", |m| m.as_str());
+            let pkg = caps.get(3).map_or("", |m| m.as_str());
+            let ver = caps.get(4).map_or("", |m| m.as_str());
             let out = format!(
                 "{} status {} {} {}",
                 colorize(Color::Date, ts),
@@ -43,15 +45,15 @@ impl Plugin for Dpkg {
         }
 
         if let Some(caps) = RE_ACTION.captures(line) {
-            let ts     = caps.get(1).map_or("", |m| m.as_str());
+            let ts = caps.get(1).map_or("", |m| m.as_str());
             let action = caps.get(2).map_or("", |m| m.as_str());
-            let pkg    = caps.get(3).map_or("", |m| m.as_str());
-            let old    = caps.get(4).map_or("", |m| m.as_str());
-            let new    = caps.get(5).map_or("", |m| m.as_str());
+            let pkg = caps.get(3).map_or("", |m| m.as_str());
+            let old = caps.get(4).map_or("", |m| m.as_str());
+            let new = caps.get(5).map_or("", |m| m.as_str());
             let a_color = match action {
                 "install" | "upgrade" => Color::GoodWord,
-                "remove"  | "purge"   => Color::BadWord,
-                _                     => Color::Default,
+                "remove" | "purge" => Color::BadWord,
+                _ => Color::Default,
             };
             let out = format!(
                 "{} {} {} {} {}",
@@ -65,9 +67,9 @@ impl Plugin for Dpkg {
         }
 
         if let Some(caps) = RE_CONFFILE.captures(line) {
-            let ts      = caps.get(1).map_or("", |m| m.as_str());
-            let path    = caps.get(2).map_or("", |m| m.as_str());
-            let decision= caps.get(3).map_or("", |m| m.as_str());
+            let ts = caps.get(1).map_or("", |m| m.as_str());
+            let path = caps.get(2).map_or("", |m| m.as_str());
+            let decision = caps.get(3).map_or("", |m| m.as_str());
             let out = format!(
                 "{} conffile {} {}",
                 colorize(Color::Date, ts),

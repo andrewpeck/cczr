@@ -23,7 +23,9 @@ fn pipefail_status(pipeline: &str) -> i32 {
         .args(["-o", "pipefail", "-c", pipeline])
         .status()
         .expect("failed to spawn bash");
-    status.code().expect("process terminated by signal, no exit code")
+    status
+        .code()
+        .expect("process terminated by signal, no exit code")
 }
 
 #[test]

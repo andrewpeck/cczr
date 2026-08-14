@@ -1,26 +1,29 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::color::{colorize, Color};
+use crate::color::{Color, colorize};
 use crate::plugin::{Plugin, PluginResult, PluginType};
 
 // [DD-Mon-YYYY HH:MM:SS] PHP <message>
-static RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(\[\d+-\w+-\d+ \d+:\d+:\d+\]) PHP (.*)$").unwrap()
-});
+static RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(\[\d+-\w+-\d+ \d+:\d+:\d+\]) PHP (.*)$").unwrap());
 
 pub struct Php;
 
 impl Plugin for Php {
-    fn name(&self) -> &'static str { "php" }
-    fn kind(&self) -> PluginType { PluginType::Full }
+    fn name(&self) -> &'static str {
+        "php"
+    }
+    fn kind(&self) -> PluginType {
+        PluginType::Full
+    }
 
     fn process(&self, line: &str) -> PluginResult {
         let caps = match RE.captures(line) {
             Some(c) => c,
             None => return PluginResult::NoMatch,
         };
-        let ts  = caps.get(1).map_or("", |m| m.as_str());
+        let ts = caps.get(1).map_or("", |m| m.as_str());
         let msg = caps.get(2).map_or("", |m| m.as_str());
 
         // Detect severity from message prefix

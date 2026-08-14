@@ -1,10 +1,8 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::color::{colorize, Color};
-use crate::plugin::{
-    colorize_http_method, colorize_http_status, Plugin, PluginResult, PluginType,
-};
+use crate::color::{Color, colorize};
+use crate::plugin::{Plugin, PluginResult, PluginType, colorize_http_method, colorize_http_status};
 
 // Combined Apache access log (CLF / vhost-CLF):
 //   [vhost ]host ident user [timestamp] "METHOD path HTTP/x" status size [referrer agent]
@@ -25,25 +23,33 @@ static RE_ERROR: Lazy<Regex> = Lazy::new(|| {
 pub struct Httpd;
 
 impl Plugin for Httpd {
-    fn name(&self) -> &'static str { "httpd" }
-    fn kind(&self) -> PluginType { PluginType::Full }
+    fn name(&self) -> &'static str {
+        "httpd"
+    }
+    fn kind(&self) -> PluginType {
+        PluginType::Full
+    }
 
     fn process(&self, line: &str) -> PluginResult {
         if let Some(caps) = RE_ACCESS.captures(line) {
-            let host    = caps.get(1).map_or("", |m| m.as_str());
-            let ident   = caps.get(2).map_or("-", |m| m.as_str());
-            let user    = caps.get(3).map_or("", |m| m.as_str());
-            let ts      = caps.get(4).map_or("", |m| m.as_str());
+            let host = caps.get(1).map_or("", |m| m.as_str());
+            let ident = caps.get(2).map_or("-", |m| m.as_str());
+            let user = caps.get(3).map_or("", |m| m.as_str());
+            let ts = caps.get(4).map_or("", |m| m.as_str());
             let request = caps.get(5).map_or("", |m| m.as_str());
-            let method  = caps.get(6).map_or("", |m| m.as_str());
-            let status  = caps.get(7).map_or("", |m| m.as_str());
-            let size    = caps.get(8).map_or("", |m| m.as_str());
-            let extra   = caps.get(9).map_or("", |m| m.as_str());
+            let method = caps.get(6).map_or("", |m| m.as_str());
+            let status = caps.get(7).map_or("", |m| m.as_str());
+            let size = caps.get(8).map_or("", |m| m.as_str());
+            let extra = caps.get(9).map_or("", |m| m.as_str());
 
             // Rebuild request string with colorized method
             let req_colored = if !method.is_empty() {
                 let rest = &request[method.len()..];
-                format!("{}{}", colorize_http_method(method), colorize(Color::Uri, rest))
+                format!(
+                    "{}{}",
+                    colorize_http_method(method),
+                    colorize(Color::Uri, rest)
+                )
             } else {
                 colorize(Color::Uri, request)
             };
@@ -63,14 +69,14 @@ impl Plugin for Httpd {
         }
 
         if let Some(caps) = RE_ERROR.captures(line) {
-            let ts    = caps.get(1).map_or("", |m| m.as_str());
+            let ts = caps.get(1).map_or("", |m| m.as_str());
             let level = caps.get(2).map_or("", |m| m.as_str());
-            let msg   = caps.get(3).map_or("", |m| m.as_str());
+            let msg = caps.get(3).map_or("", |m| m.as_str());
 
             let level_color = match level.trim_matches(['[', ']']) {
                 "error" | "crit" | "alert" | "emerg" => Color::Error,
-                "warn"  => Color::Warning,
-                "notice"| "info" => Color::GoodWord,
+                "warn" => Color::Warning,
+                "notice" | "info" => Color::GoodWord,
                 "debug" => Color::Debug,
                 _ => Color::Unknown,
             };

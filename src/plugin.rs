@@ -1,4 +1,4 @@
-use crate::color::{colorize, Color};
+use crate::color::{Color, colorize};
 
 /// Whether a plugin handles the full line or only parts of it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -43,13 +43,13 @@ pub(crate) fn colorize_http_status(code: &str) -> String {
 /// Colorize an HTTP method string.
 pub(crate) fn colorize_http_method(method: &str) -> String {
     let color = match method {
-        "GET"     => Color::HttpGet,
-        "POST"    => Color::HttpPost,
-        "HEAD"    => Color::HttpHead,
-        "PUT"     => Color::HttpPut,
+        "GET" => Color::HttpGet,
+        "POST" => Color::HttpPost,
+        "HEAD" => Color::HttpHead,
+        "PUT" => Color::HttpPut,
         "CONNECT" => Color::HttpConnect,
-        "TRACE"   => Color::HttpTrace,
-        _         => Color::Unknown,
+        "TRACE" => Color::HttpTrace,
+        _ => Color::Unknown,
     };
     colorize(color, method)
 }
